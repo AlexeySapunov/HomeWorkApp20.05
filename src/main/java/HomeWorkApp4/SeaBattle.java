@@ -1,142 +1,203 @@
 package HomeWorkApp4;
 
-import java.util.Random;
+import java.util.Scanner;
 
 public class SeaBattle {
 
-    private static final String ANSI_RESET = "\u001B[0m";
-    private static final String ANSI_RED = "\u001B[31m";
-    private static final String ANSI_GREEN = "\u001B[32m";
-    private static final String ANSI_BLUE = "\u001B[34m";
-    private static final String ANSI_PURPLE = "\u001B[35m";
-    private static final String ANSI_CYAN = "\u001B[36m";
-    private static final String ANSI_WHITE = "\u001B[37m";
-
     private static final int WIDTH = 10;
     private static final int HEIGHT = 10;
-    private static final int SHIPS_COUNT = 10;
-    private static final int SHIP = 1000;
+    private static final int SHIP = 2;
     private static final int EMPTY = 0;
-    private static final int BATTLESHIP = 1; // 4-хпалубный линкор
-    private static final int CRUISER = 2; // 3-хпалубный крейсер
-    private static final int DESTROYER = 3; // 2-хпалубный эсминец
-    private static final int TORPEDO_BOAT = 4; // 1-апалубный торпедный катер
+    private static final int MISS = 1;
+    private static final int SHIPS_DECK_ON_BOARD = 10;
+    static String playerName1 = "Player#1";
+    static String playerName2 = "Player#2";
+    static Scanner scanner = new Scanner(System.in);
+    static int[][] board1 = new int[WIDTH][HEIGHT];
+    static int[][] board2 = new int[WIDTH][HEIGHT];
+    static int[][] monitor1 = new int[WIDTH][HEIGHT];
+    static int[][] monitor2 = new int[WIDTH][HEIGHT];
 
     public static void main(String[] args) {
 
-        boolean win = play();
-        if (win) {
-            System.out.println("Поздравляю, вы выиграли!");
-        } else {
-            System.out.println("Вы проиграли");
+        System.out.println("Player#1, Введите свое имя:");
+        playerName1 = scanner.nextLine();
+        System.out.println("Player#2, Введите свое имя:");
+        playerName2 = scanner.nextLine();
+        placeShips(playerName1, board1);
+        placeShips(playerName2, board2);
+        while (true) {
+            makeTurn(playerName1, monitor1, board2);
+            if (isWin()) {
+                break;
+            }
+            makeTurn(playerName2, monitor2, board1);
+            if (isWin()) {
+                break;
+            }
         }
 
     }
 
-    private static boolean play() {
-        int[][] board = generateBoard();
- //       int[] ships = generateShips();
-        printBoard(board);
-        return true;
+    public static void placeShips(String playerName, int[][] board) {
+        int deck = 4;
+        while (deck >= 1) {
+            System.out.println();
+            System.out.println(playerName + ", Разместите свои " + deck + "-палубные корабли на поле:");
+            System.out.println();
+            printBoard(board);
+            System.out.println("Введите координаты по оси Х:");
+            int x = scanner.nextInt();
+            System.out.println("Введите координаты по оси Y:");
+            int y = scanner.nextInt();
+            System.out.println("ВЫберите направление:");
+            System.out.println("1. Вертикальное.");
+            System.out.println("2. Горизонтальное.");
+            int direction = scanner.nextInt();
+            if (!isAvailable(x, y, deck, direction, board)){
+                System.out.println("Не правильные координаты!");
+                continue;
+            }
+            for (int i = 0; i < deck; i++) {
+                if (direction == 1) {
+                    board[x][y + i] = SHIP;
+                } else {
+                    board[x + i][y] = SHIP;
+                }
+            }
+            deck--;
+        }
     }
 
-    private static void printBoard(int[][] board) {
+    public static void printBoard(int[][] board) {
         System.out.print("   ");
         for (char i = 'A'; i < 'A' + WIDTH; i++) {
             System.out.print(" " + i);
         }
-        System.out.println();
         for (int i = 0; i < HEIGHT; i++) {
-            System.out.printf("%3d", i);
+            System.out.print(i + " ");
             for (int j = 0; j < WIDTH; j++) {
-                System.out.print(getColorCode(board[i][j]));
-                switch (board[i][j]) {
-                    case EMPTY:
-                        System.out.print(" .");
-                        break;
-                    case SHIP:
-                        System.out.print(" x");
-                        break;
-                    default:
-                        System.out.printf("%2d", board[i][j]);
+                if (board[j][i] == EMPTY) {
+                    System.out.print("[] ");
+                } else {
+                    System.out.print("X ");
                 }
-                System.out.print(ANSI_RESET);
             }
             System.out.println();
         }
     }
 
-    private static String getColorCode(int n) {
-        switch (n) {
-            case EMPTY:
-                return ANSI_WHITE;
-            case BATTLESHIP:
-                return ANSI_RED;
-            case CRUISER:
-                return ANSI_BLUE;
-            case DESTROYER:
-                return ANSI_CYAN;
-            case TORPEDO_BOAT:
-                return ANSI_GREEN;
-            default:
-                return ANSI_PURPLE;
-        }
-    }
-
-    //   private static int[] generateShips() {
- //       int[] fourDeckShip = new int[4];
- //       int[] threeDeckShip = new int[3];
- //       int[] doubleDeckShip = new int[2];
- //       int[] singleDeckShip = new int[1];
- //   }
-
-    private static int[][] generateBoard() {
-        int[][] board = placeShips();
-        return calculateShipsAround(board);
-    }
-
-    private static int[][] placeShips() {
-        int[][] board = new int[HEIGHT][WIDTH];
-        Random random = new Random();
-        int ships = SHIPS_COUNT;
-        while (ships > 0) {
-            int x, y;
-            do {
-                x = random.nextInt(WIDTH);
-                y = random.nextInt(HEIGHT);
-            } while (board[x][y] == SHIP);
-            board[x][y] = SHIP;
-            ships--;
-        }
-        return board;
-    }
-
-    private static int[][] calculateShipsAround(int[][] board) {
-        for (int i = 0; i < HEIGHT; i++) {
-            for (int j = 0; j < WIDTH; j++) {
-                if (board[i][j] == SHIP) {
-                    continue;
+    public static void makeTurn(String playerName, int[][] monitor, int[][] board) {
+        while (true) {
+            System.out.println(playerName + ", Сделайте свой ход.");
+            System.out.print("   ");
+            for (char i = 'A'; i < 'A' + WIDTH; i++) {
+                System.out.print(" " + i);
+            }
+            for (int i = 0; i < HEIGHT; i++) {
+                System.out.print(i + " ");
+                for (int j = 0; j < WIDTH; j++) {
+                    if (monitor[j][i] == EMPTY) {
+                        System.out.print("[] ");
+                    } else if (monitor[j][i] == MISS) {
+                        System.out.print(". ");
+                    } else {
+                        System.out.print("X ");
+                    }
                 }
-                board[i][j] = calculateShipAroundCell(board, i, j);
+                System.out.println();
+            }
+            System.out.println("Введите координаты по оси Х:");
+            int x = scanner.nextInt();
+            System.out.println("Введите координаты по оси Y:");
+            int y = scanner.nextInt();
+            if (board[x][y] == 1) {
+                System.out.println("Попал! Делайте еще один ход!");
+                monitor[x][y] = SHIP;
+            } else {
+                System.out.println("Miss! Your opponents turn!");
+                monitor[x][y] = MISS;
+                break;
             }
         }
-        return board;
     }
 
-    private static int calculateShipAroundCell(int[][] board, int i, int j) {
-        int sCount = 0;
-        for (int k = i - 1; k <= i + 1; k++) {
-            for (int l = j - 1; l <= j + 1; l++) {
-                if (k < 0 || k >= HEIGHT || l < 0 || l >= WIDTH) {
-                    continue;
-                }
-                if (board[k][l] == SHIP) {
-                    sCount++;
+    public static boolean isWin() {
+        int counter1 = 0;
+        for (int[] ints : monitor1) {
+            for (int anInt : ints) {
+                if (anInt == SHIP) {
+                    counter1++;
                 }
             }
         }
-        return sCount;
+
+        int counter2 = 0;
+        for (int[] ints : monitor2) {
+            for (int anInt : ints) {
+                if (anInt == SHIP) {
+                    counter2++;
+                }
+            }
+        }
+
+        if (counter1 >= SHIPS_DECK_ON_BOARD) {
+            System.out.println(playerName1 + " Победа!!!");
+            return true;
+        }
+        if (counter2 >= SHIPS_DECK_ON_BOARD) {
+            System.out.println(playerName2 + " Победа!!!");
+            return true;
+        }
+        return false;
     }
 
+    public static boolean isAvailable(int x, int y, int deck, int direction, int[][] board) {
 
+        if (direction == 1) {
+            if (y + deck > WIDTH) {
+                return false;
+            }
+        }
+        if (direction == 2){
+            if (x + deck > HEIGHT){
+                return false;
+            }
+        }
+
+        while (deck!=0){
+            for (int i = 0; i < deck; i++) {
+                int xi = 0;
+                int yi = 0;
+                if (direction == 1){
+                    yi = i;
+                } else{
+                    xi = i;
+                }
+
+                if (x + 1 + xi < HEIGHT && x + 1 + xi >= 0){
+                    if (board[x + 1 + xi][y + yi]!=0){
+                        return false;
+                    }
+                }
+                if (x - 1 + xi < HEIGHT && x - 1 + xi >= 0){
+                    if (board[x - 1 + xi][y + yi]!=0){
+                        return false;
+                    }
+                }
+                if (y + 1 + yi <WIDTH && y + 1 + yi >= 0){
+                    if (board[x + xi][y + 1 + yi]!=0){
+                        return false;
+                    }
+                }
+                if (y - 1 + yi < WIDTH && y - 1 + yi >= 0){
+                    if (board[x + xi][y - 1 + yi]!=0){
+                        return false;
+                    }
+                }
+            }
+            deck--;
+        }
+        return true;
+    }
 }
