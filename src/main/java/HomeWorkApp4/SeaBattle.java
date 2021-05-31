@@ -153,7 +153,7 @@ public class SeaBattle {
     }
 
     public static boolean isAvailable(int x, int y, int deck, int direction, int[][] board) {
-
+// Проверка на выход за пределы границ поля
         if (direction == 1) {
             if (y + deck > WIDTH) {
                 return false;
@@ -164,7 +164,7 @@ public class SeaBattle {
                 return false;
             }
         }
-
+// Проверка на отсутствие рядом стоящих и смежных кораблей
         while (deck!=0){
             for (int i = 0; i < deck; i++) {
                 int xi = 0;
